@@ -63,7 +63,7 @@ function Footer() {
 
                 
                 <div className="border-t border-gray-200 dark:border-neutral-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center md:text-left">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm text-center md:text-left" suppressHydrationWarning>
                         &copy; {new Date().getFullYear()} {webSettings?.footerText || "Sasa Kopi"}.
                     </p>
                     <div className="flex items-center gap-6">

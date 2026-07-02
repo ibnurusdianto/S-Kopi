@@ -7,7 +7,7 @@ export default function AdminMenuPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentMenu, setCurrentMenu] = useState<Partial<Menu>>({});
 
-    if (!isLoaded) return <div className="p-8 text-center text-gray-500">Memuat data...</div>;
+    if (!isLoaded) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>;
 
     const [imageError, setImageError] = useState("");
 
@@ -64,16 +64,16 @@ export default function AdminMenuPage() {
 
     if (isEditing) {
         return (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 max-w-2xl">
+            <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 max-w-2xl text-gray-900 dark:text-white">
                 <h2 className="text-xl font-bold mb-6">{currentMenu.id ? "Edit Menu" : "Tambah Menu Baru"}</h2>
                 <form onSubmit={handleSave} className="space-y-4">
                     <div>
                         <label className="block text-sm font-semibold mb-1">Nama Menu</label>
-                        <input required type="text" value={currentMenu.name || ""} onChange={e => setCurrentMenu({...currentMenu, name: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
+                        <input required type="text" value={currentMenu.name || ""} onChange={e => setCurrentMenu({...currentMenu, name: e.target.value})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Kategori</label>
-                        <select value={currentMenu.category || "Kopi"} onChange={e => setCurrentMenu({...currentMenu, category: e.target.value})} className="w-full border rounded-lg px-3 py-2">
+                        <select value={currentMenu.category || "Kopi"} onChange={e => setCurrentMenu({...currentMenu, category: e.target.value})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 dark:bg-neutral-900">
                             <option value="Kopi">Kopi</option>
                             <option value="Non-Kopi">Non-Kopi</option>
                             <option value="Cemilan">Cemilan</option>
@@ -81,33 +81,33 @@ export default function AdminMenuPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Harga (Rp)</label>
-                        <input required type="number" value={currentMenu.price || 0} onChange={e => setCurrentMenu({...currentMenu, price: Number(e.target.value)})} className="w-full border rounded-lg px-3 py-2" />
+                        <input required type="number" value={currentMenu.price || 0} onChange={e => setCurrentMenu({...currentMenu, price: Number(e.target.value)})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Deskripsi</label>
-                        <textarea required rows={3} value={currentMenu.description || ""} onChange={e => setCurrentMenu({...currentMenu, description: e.target.value})} className="w-full border rounded-lg px-3 py-2"></textarea>
+                        <textarea required rows={3} value={currentMenu.description || ""} onChange={e => setCurrentMenu({...currentMenu, description: e.target.value})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500"></textarea>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Gambar Menu (Max 10MB, JPG/PNG)</label>
-                        <input type="file" accept=".jpg, .jpeg, .png" onChange={handleImageUpload} className="w-full border rounded-lg px-3 py-2 text-sm" />
+                        <input type="file" accept=".jpg, .jpeg, .png" onChange={handleImageUpload} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500" />
                         {imageError && <p className="text-red-500 text-xs mt-1">{imageError}</p>}
                         {currentMenu.image && (
                             <div className="mt-2">
-                                <img src={currentMenu.image} alt="Preview" className="w-20 h-20 object-cover rounded-lg border bg-gray-50" />
+                                <img src={currentMenu.image} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800" />
                             </div>
                         )}
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Stok</label>
-                        <select value={currentMenu.stock || "Tersedia"} onChange={e => setCurrentMenu({...currentMenu, stock: e.target.value as "Tersedia" | "Habis"})} className="w-full border rounded-lg px-3 py-2">
+                        <select value={currentMenu.stock || "Tersedia"} onChange={e => setCurrentMenu({...currentMenu, stock: e.target.value as "Tersedia" | "Habis"})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 dark:bg-neutral-900">
                             <option value="Tersedia">Tersedia</option>
                             <option value="Habis">Habis</option>
                         </select>
                     </div>
                     
                     <div className="flex gap-3 pt-4">
-                        <button type="submit" className="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold">Simpan</button>
-                        <button type="button" onClick={() => setIsEditing(false)} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-bold">Batal</button>
+                        <button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">Simpan</button>
+                        <button type="button" onClick={() => setIsEditing(false)} className="bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-bold transition-colors">Batal</button>
                     </div>
                 </form>
             </div>
@@ -118,18 +118,18 @@ export default function AdminMenuPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Kelola Menu</h1>
-                    <p className="text-gray-500 text-sm mt-1">Daftar semua menu yang tersedia.</p>
+                    <h1 className="text-2xl font-black text-gray-900 dark:text-white">Kelola Menu</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Daftar semua menu yang tersedia.</p>
                 </div>
-                <button onClick={handleAddNew} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm">
+                <button onClick={handleAddNew} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-colors">
                     + Tambah Menu
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                        <thead className="bg-gray-50 dark:bg-neutral-900 text-gray-600 dark:text-gray-400 font-semibold border-b border-gray-200 dark:border-neutral-800">
                             <tr>
                                 <th className="px-6 py-4">Menu</th>
                                 <th className="px-6 py-4">Kategori</th>
@@ -138,33 +138,33 @@ export default function AdminMenuPage() {
                                 <th className="px-6 py-4 text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
                             {menus.map(menu => (
-                                <tr key={menu.id} className="hover:bg-gray-50/50">
+                                <tr key={menu.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <img src={menu.image} alt={menu.name} className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                                            <img src={menu.image} alt={menu.name} className="w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-neutral-800" />
                                             <div>
-                                                <p className="font-bold text-gray-900">{menu.name}</p>
+                                                <p className="font-bold text-gray-900 dark:text-white">{menu.name}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-600">{menu.category}</td>
-                                    <td className="px-6 py-4 font-semibold text-amber-700">Rp {menu.price.toLocaleString("id-ID")}</td>
+                                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{menu.category}</td>
+                                    <td className="px-6 py-4 font-semibold text-amber-700 dark:text-amber-500">Rp {menu.price.toLocaleString("id-ID")}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${menu.stock === "Tersedia" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${menu.stock === "Tersedia" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>
                                             {menu.stock}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-3">
-                                        <button onClick={() => handleEdit(menu)} className="text-amber-600 hover:text-amber-800 font-bold">Edit</button>
-                                        <button onClick={() => { if(confirm("Hapus menu ini?")) deleteMenu(menu.id) }} className="text-red-500 hover:text-red-700 font-bold">Hapus</button>
+                                        <button onClick={() => handleEdit(menu)} className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-400 font-bold">Edit</button>
+                                        <button onClick={() => { if(confirm("Hapus menu ini?")) deleteMenu(menu.id) }} className="text-red-500 hover:text-red-700 dark:hover:text-red-400 font-bold">Hapus</button>
                                     </td>
                                 </tr>
                             ))}
                             {menus.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Tidak ada menu.</td>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada menu.</td>
                                 </tr>
                             )}
                         </tbody>

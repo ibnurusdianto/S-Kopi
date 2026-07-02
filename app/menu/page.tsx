@@ -73,7 +73,7 @@ function MenuItemCard({ item, cartQty, onAddClick, onDecreaseClick, onViewImage 
 
 
 export default function MenuPage() {
-    const { menus, addOrder } = useData();
+    const { menus, addOrder, isLoaded } = useData();
 
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [sortFilter, setSortFilter] = useState("default");
@@ -232,6 +232,15 @@ export default function MenuPage() {
         return processedMenu.slice(start, start + itemsPerPage);
     }, [processedMenu, currentPage]);
 
+    if (!isLoaded) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-4 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-sm font-medium text-gray-500 dark:text-gray-400">Memuat Menu...</p>
+            </div>
+        );
+    }
+
     return (
         <div className={`relative min-h-screen bg-background text-foreground ${totalCartItems > 0 ? 'pb-36 sm:pb-32' : 'pb-24'}`}>
 
@@ -339,8 +348,8 @@ export default function MenuPage() {
                             <div>
                                 <label className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3 block">Ukuran (Size)</label>
                                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                                    <button onClick={() => setCustomOptions({ ...customOptions, size: "Regular" })} className={`py-2.5 sm:py-3 px-3 rounded-xl border text-xs sm:text-sm font-medium transition-all ${customOptions.size === "Regular" ? "border-amber-600 bg-amber-50 text-amber-800" : "border-gray-200 text-gray-600"}`}>Regular</button>
-                                    <button onClick={() => setCustomOptions({ ...customOptions, size: "Large" })} className={`py-2.5 sm:py-3 px-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex flex-col items-center justify-center ${customOptions.size === "Large" ? "border-amber-600 bg-amber-50 text-amber-800" : "border-gray-200 text-gray-600"}`}>
+                                    <button onClick={() => setCustomOptions({ ...customOptions, size: "Regular" })} className={`py-2.5 sm:py-3 px-3 rounded-xl border text-xs sm:text-sm font-medium transition-all ${customOptions.size === "Regular" ? "border-amber-600 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : "border-gray-200 text-gray-600 dark:border-neutral-700 dark:text-gray-400"}`}>Regular</button>
+                                    <button onClick={() => setCustomOptions({ ...customOptions, size: "Large" })} className={`py-2.5 sm:py-3 px-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex flex-col items-center justify-center ${customOptions.size === "Large" ? "border-amber-600 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : "border-gray-200 text-gray-600 dark:border-neutral-700 dark:text-gray-400"}`}>
                                         <span>Large</span>
                                         <span className="text-[9px] opacity-70">+ Rp 5.000</span>
                                     </button>
@@ -353,7 +362,7 @@ export default function MenuPage() {
                                         <label className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Gula (Sugar)</label>
                                         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                                             {["Normal", "Less", "No"].map((opt) => (
-                                                <button key={opt} onClick={() => setCustomOptions({ ...customOptions, sugar: opt + (opt !== "Normal" ? " Sugar" : "") })} className={`py-2 rounded-lg border text-xs font-medium transition-all ${customOptions.sugar.startsWith(opt) ? "border-amber-600 bg-amber-50 text-amber-800" : "border-gray-200 text-gray-600"}`}>{opt}</button>
+                                                <button key={opt} onClick={() => setCustomOptions({ ...customOptions, sugar: opt + (opt !== "Normal" ? " Sugar" : "") })} className={`py-2 rounded-lg border text-xs font-medium transition-all ${customOptions.sugar.startsWith(opt) ? "border-amber-600 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : "border-gray-200 text-gray-600 dark:border-neutral-700 dark:text-gray-400"}`}>{opt}</button>
                                             ))}
                                         </div>
                                     </div>
@@ -361,24 +370,24 @@ export default function MenuPage() {
                                         <label className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 block">Es (Ice Level)</label>
                                         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                                             {["Normal", "Less", "No"].map((opt) => (
-                                                <button key={opt} onClick={() => setCustomOptions({ ...customOptions, ice: opt + (opt !== "Normal" ? " Ice" : "") })} className={`py-2 rounded-lg border text-xs font-medium transition-all ${customOptions.ice.startsWith(opt) ? "border-amber-600 bg-amber-50 text-amber-800" : "border-gray-200 text-gray-600"}`}>{opt}</button>
+                                                <button key={opt} onClick={() => setCustomOptions({ ...customOptions, ice: opt + (opt !== "Normal" ? " Ice" : "") })} className={`py-2 rounded-lg border text-xs font-medium transition-all ${customOptions.ice.startsWith(opt) ? "border-amber-600 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : "border-gray-200 text-gray-600 dark:border-neutral-700 dark:text-gray-400"}`}>{opt}</button>
                                             ))}
                                         </div>
                                     </div>
                                 </>
                             )}
 
-                            <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2">
-                                <span className="text-xs sm:text-sm font-bold text-gray-700">Jumlah Pesanan</span>
-                                <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-200">
-                                    <button onClick={() => setCustomOptions({ ...customOptions, qty: Math.max(1, customOptions.qty - 1) })} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white shadow-sm font-bold text-gray-700">－</button>
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-neutral-800 mt-2">
+                                <span className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300">Jumlah Pesanan</span>
+                                <div className="flex items-center bg-gray-50 dark:bg-neutral-800 rounded-xl p-1 border border-gray-200 dark:border-neutral-700">
+                                    <button onClick={() => setCustomOptions({ ...customOptions, qty: Math.max(1, customOptions.qty - 1) })} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 shadow-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-600">－</button>
                                     <span className="font-bold text-sm text-foreground w-10 text-center">{customOptions.qty}</span>
                                     <button onClick={() => setCustomOptions({ ...customOptions, qty: customOptions.qty + 1 })} className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-600 text-white shadow-sm font-bold">＋</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-5 border-t border-gray-100 bg-gray-50 shrink-0 mb-safe">
+                        <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900/50 shrink-0 mb-safe">
                             <button onClick={handleAddToCart} className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-md">
                                 Tambahkan - {formatRupiah((customizingItem.price + (customOptions.size === "Large" ? 5000 : 0)) * customOptions.qty)}
                             </button>

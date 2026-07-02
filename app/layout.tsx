@@ -4,8 +4,24 @@ import "./globals.css";
 import Headers from "./component/Headers";
 import Footer from "./component/Footer";
 import { CartProvider } from "./context/CartContext";
-
 import { DataProvider } from "./context/DataContext";
+import { ThemeProvider } from "./context/ThemeContext";
+
+const themeInitScript = `
+  (function() {
+    try {
+      var storedTheme = localStorage.getItem('theme');
+      var hour = new Date().getHours();
+      var isDaytime = hour >= 6 && hour < 18;
+      var theme = storedTheme || (isDaytime ? 'light' : 'dark');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,15 +47,21 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
-        <DataProvider>
-          <CartProvider>
-            <Headers />
-            {children}
-            <Footer />
-          </CartProvider>
-        </DataProvider>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <ThemeProvider>
+          <DataProvider>
+            <CartProvider>
+              <Headers />
+              {children}
+              <Footer />
+            </CartProvider>
+          </DataProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
