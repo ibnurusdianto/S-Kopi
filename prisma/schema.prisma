@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model addons {
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(100)
+  price             Decimal             @db.Decimal(10, 2)
+  is_available      Boolean?            @default(true)
+  order_item_addons order_item_addons[]
+}
+
+model categories {
+  id         Int        @id @default(autoincrement())
+  name       String     @db.VarChar(100)
+  created_at DateTime   @default(now()) @db.Timestamp(0)
+  products   products[]
+}
+
+model order_item_addons {
+  id            Int         @id @default(autoincrement())
+  order_item_id Int
+  addon_id      Int
+  price         Decimal     @db.Decimal(10, 2)
+  order_items   order_items @relation(fields: [order_item_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "order_item_addons_ibfk_1")
+  addons        addons      @relation(fields: [addon_id], references: [id], onUpdate: Restrict, map: "order_item_addons_ibfk_2")
+
+  @@index([addon_id], map: "addon_id")
+  @@index([order_item_id], map: "order_item_id")
+}
+
+model order_items {
+  id                Int                 @id @default(autoincrement())
+  order_id          Int
+  product_id        Int
+  size_id           Int?
+  quantity          Int                 @default(1)
+  subtotal          Decimal             @db.Decimal(10, 2)
+  notes             String?             @db.Text
+  order_item_addons order_item_addons[]
+  orders            orders              @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "order_items_ibfk_1")
+  products          products            @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "order_items_ibfk_2")
+  product_sizes     product_sizes?      @relation(fields: [size_id], references: [id], onUpdate: Restrict, map: "order_items_ibfk_3")
+
+  @@index([order_id], map: "order_id")
+  @@index([product_id], map: "product_id")
+  @@index([size_id], map: "size_id")
+}
+
+model orders {
+  id                             Int                    @id @default(autoincrement())
+  user_id                        Int?
+  cashier_id                     Int?
+  order_number                   String                 @unique(map: "order_number") @db.VarChar(50)
+  total_amount                   Decimal                @db.Decimal(10, 2)
+  voucher_id                     Int?
+  discount_amount                Decimal?               @default(0.00) @db.Decimal(10, 2)
+  status                         orders_status?         @default(pending)
+  payment_status                 orders_payment_status? @default(unpaid)
+  created_at                     DateTime               @default(now()) @db.Timestamp(0)
+  order_items                    order_items[]
+  users_orders_user_idTousers    users?                 @relation("orders_user_idTousers", fields: [user_id], references: [id], onUpdate: Restrict, map: "orders_ibfk_1")
+  users_orders_cashier_idTousers users?                 @relation("orders_cashier_idTousers", fields: [cashier_id], references: [id], onUpdate: Restrict, map: "orders_ibfk_2")
+  vouchers                       vouchers?              @relation(fields: [voucher_id], references: [id])
+  payments                       payments?
+
+  @@index([cashier_id], map: "cashier_id")
+  @@index([user_id], map: "user_id")
+  @@index([voucher_id])
+}
+
+model payments {
+  id             Int                     @id @default(autoincrement())
+  order_id       Int                     @unique(map: "order_id")
+  payment_method payments_payment_method
+  amount_paid    Decimal                 @db.Decimal(10, 2)
+  payment_date   DateTime                @default(now()) @db.Timestamp(0)
+  orders         orders                  @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "payments_ibfk_1")
+}
+
+model product_sizes {
+  id               Int           @id @default(autoincrement())
+  product_id       Int
+  size_name        String        @db.VarChar(50)
+  price_adjustment Decimal?      @default(0.00) @db.Decimal(10, 2)
+  order_items      order_items[]
+  products         products      @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_sizes_ibfk_1")
+
+  @@index([product_id], map: "product_id")
+}
+
+model products {
+  id            Int             @id @default(autoincrement())
+  category_id   Int?
+  name          String          @db.VarChar(255)
+  description   String?         @db.Text
+  base_price    Decimal         @db.Decimal(10, 2)
+  image_url     String?         @db.LongText
+  is_available  Boolean?        @default(true)
+  stock         Int             @default(0)
+  is_track_stock Boolean        @default(false)
+  created_at    DateTime        @default(now()) @db.Timestamp(0)
+  order_items   order_items[]
+  product_sizes product_sizes[]
+  categories    categories?     @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "products_ibfk_1")
+
+  @@index([category_id], map: "category_id")
+}
+
+model roles {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique(map: "name") @db.VarChar(50)
+  users users[]
+}
+
+model users {
+  id                              Int      @id @default(autoincrement())
+  role_id                         Int
+  username                        String   @unique(map: "username") @db.VarChar(100)
+  password_hash                   String   @db.VarChar(255)
+  email                           String?  @db.VarChar(255)
+  full_name                       String   @db.VarChar(255)
+  created_at                      DateTime @default(now()) @db.Timestamp(0)
+  orders_orders_user_idTousers    orders[] @relation("orders_user_idTousers")
+  orders_orders_cashier_idTousers orders[] @relation("orders_cashier_idTousers")
+  roles                           roles    @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
+
+  @@index([role_id], map: "role_id")
+}
+
+enum payments_payment_method {
+  cash
+  debit_card
+  credit_card
+  qris
+  ewallet
+}
+
+enum orders_status {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+enum orders_payment_status {
+  unpaid
+  paid
+  refunded
+}
+
+model web_settings {
+  id         Int      @id @default(autoincrement())
+  key_name   String   @unique @db.VarChar(100)
+  value      String   @db.Text
+  updated_at DateTime @updatedAt
+}
+
+model vouchers {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique @db.VarChar(50)
+  discount_type   String    @db.VarChar(20)
+  discount_amount Decimal   @db.Decimal(10, 2)
+  valid_until     DateTime?
+  usage_limit     Int?
+  used_count      Int       @default(0)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  orders          orders[]
+}
+
+model customer_messages {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @db.VarChar(255)
+  subject    String?  @db.VarChar(255)
+  message    String   @db.Text
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+}

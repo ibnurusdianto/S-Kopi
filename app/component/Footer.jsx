@@ -23,6 +23,7 @@ function Footer() {
                                 width={100} 
                                 height={100} 
                                 className="cursor-pointer object-contain" 
+                                style={{ width: 'auto', height: 'auto' }}
                             />
                             <span>{webSettings?.headerLogoText || "Sasa Kopi"}</span>
                         </Link>

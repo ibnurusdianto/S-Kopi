@@ -19,6 +19,7 @@ export default function TentangKamiPage() {
                         width={80}
                         height={80}
                         className="object-contain"
+                        style={{ width: 'auto', height: 'auto' }}
                     />
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-sans tracking-tight">
                         {aboutUs?.title || "Cerita Sasa Kopi"}

@@ -36,6 +36,7 @@ function Headers() {
                                 width={40}
                                 height={40}
                                 className="cursor-pointer object-contain"
+                                style={{ width: 'auto', height: 'auto' }}
                             />
                             <span>{webSettings?.headerLogoText || "Sasa Kopi"}</span>
                         </Link>

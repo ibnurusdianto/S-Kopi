@@ -30,6 +30,7 @@ export default function Home() {
               width={50}
               height={50}
               className="object-contain"
+              style={{ width: 'auto', height: 'auto' }}
             />
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight font-sans">
               Sasa Kopi

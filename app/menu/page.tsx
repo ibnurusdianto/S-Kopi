@@ -18,9 +18,13 @@ function MenuItemCard({ item, cartQty, onAddClick, onDecreaseClick, onViewImage 
     return (
         <div className="flex flex-col bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-neutral-800 transition-all hover:shadow-lg group relative z-10">
             <div onClick={() => onViewImage(item)} className="relative w-full aspect-[4/3] bg-neutral-200 dark:bg-neutral-800 overflow-hidden cursor-pointer group/img">
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs px-2 text-center z-0">
-                    [ Gambar {item.name} ]
-                </div>
+                {item.img ? (
+                    <img src={item.img} alt={item.name} className="absolute inset-0 w-full h-full object-cover z-0" />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs px-2 text-center z-0">
+                        [ Gambar {item.name} ]
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-medium z-20">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -168,8 +172,10 @@ export default function MenuPage() {
 
         
         const orderItems = cart.map(item => ({
+            product_id: item.product.id,
             name: `${item.product.name} ${item.size !== "Regular" ? "("+item.size+")" : ""}`,
-            qty: item.qty
+            qty: item.qty,
+            subtotal: item.totalPrice
         }));
         
         const newOrder = {
@@ -650,8 +656,12 @@ export default function MenuPage() {
                 <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
                     <div className="relative max-w-xl w-full bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => setSelectedImage(null)} className="absolute top-3 right-3 z-10 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
-                        <div className="relative w-full aspect-[4/3] flex items-center justify-center text-neutral-400 text-xs text-center p-4">
-                            [ Pratinjau Gambar Penuh: {selectedImage.name} ]
+                        <div className="relative w-full aspect-[4/3] flex items-center justify-center text-neutral-400 text-xs text-center overflow-hidden">
+                            {selectedImage.img ? (
+                                <img src={selectedImage.img} alt={selectedImage.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="p-4">[ Pratinjau Gambar Penuh: {selectedImage.name} ]</span>
+                            )}
                         </div>
                     </div>
                 </div>

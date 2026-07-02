@@ -64,69 +64,45 @@ export interface ContactMessage {
 interface DataContextType {
     menus: Menu[];
     setMenus: (menus: Menu[]) => void;
-    addMenu: (menu: Menu) => void;
-    updateMenu: (id: number, menu: Partial<Menu>) => void;
-    deleteMenu: (id: number) => void;
+    addMenu: (menu: Menu) => Promise<void>;
+    updateMenu: (id: number, menu: Partial<Menu>) => Promise<void>;
+    deleteMenu: (id: number) => Promise<void>;
 
     pegawais: Pegawai[];
     setPegawais: (pegawais: Pegawai[]) => void;
-    addPegawai: (p: Pegawai) => void;
-    updatePegawai: (id: string, p: Partial<Pegawai>) => void;
-    deletePegawai: (id: string) => void;
+    addPegawai: (p: Pegawai) => Promise<void>;
+    updatePegawai: (id: string, p: Partial<Pegawai>) => Promise<void>;
+    deletePegawai: (id: string) => Promise<void>;
 
     aboutUs: AboutUs;
     setAboutUs: (about: AboutUs) => void;
 
     vouchers: Voucher[];
     setVouchers: (v: Voucher[]) => void;
-    addVoucher: (v: Voucher) => void;
-    updateVoucher: (id: string, v: Partial<Voucher>) => void;
-    deleteVoucher: (id: string) => void;
+    addVoucher: (v: Voucher) => Promise<void>;
+    updateVoucher: (id: string, v: Partial<Voucher>) => Promise<void>;
+    deleteVoucher: (id: string) => Promise<void>;
 
     webSettings: WebSettings;
-    setWebSettings: (settings: WebSettings) => void;
+    setWebSettings: (settings: WebSettings) => Promise<void>;
 
     orders: Order[];
     setOrders: (orders: Order[]) => void;
-    addOrder: (order: Order) => void;
-    updateOrderStatus: (id: string, status: Order["status"]) => void;
+    addOrder: (order: Order) => Promise<void>;
+    updateOrderStatus: (id: string, status: Order["status"]) => Promise<void>;
 
     contactMessages: ContactMessage[];
     setContactMessages: (msgs: ContactMessage[]) => void;
-    addContactMessage: (msg: ContactMessage) => void;
-    deleteContactMessage: (id: string) => void;
+    addContactMessage: (msg: ContactMessage) => Promise<void>;
+    deleteContactMessage: (id: string) => Promise<void>;
     
     isLoaded: boolean;
 }
-
-const defaultMenus: Menu[] = [
-    { id: 1, name: "Kopi Hitam", description: "Kopi tubruk murni dari biji kopi pilihan nusantara dengan aroma yang kuat.", price: 15000, image: "https://images.unsplash.com/photo-1550133730-695473e544be?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 2, name: "Kopi Susu Gula Aren", description: "Perpaduan espresso, susu segar, dan manisnya gula aren alami.", price: 22000, image: "https://images.unsplash.com/photo-1599321955726-e048426594af?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 3, name: "Cappuccino", description: "Espresso klasik dengan busa susu tebal dan taburan bubuk cokelat.", price: 25000, image: "https://images.unsplash.com/photo-1517701550927-30cfcb64d4b2?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 4, name: "Cafe Latte", description: "Lebih banyak susu daripada cappuccino, sangat lembut di lidah.", price: 25000, image: "https://images.unsplash.com/photo-1551830820-330a71b99659?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 5, name: "Vanilla Latte", description: "Latte lembut dengan sirup vanilla berkualitas tinggi.", price: 28000, image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 6, name: "Caramel Macchiato", description: "Espresso, sirup vanilla, susu, dan saus karamel di atasnya.", price: 30000, image: "https://images.unsplash.com/photo-1485808191679-5f86510681a2?q=80&w=500&auto=format&fit=crop", category: "Kopi", stock: "Tersedia" },
-    { id: 7, name: "Es Teh Manis", description: "Teh melati seduh segar dengan gula pasir asli.", price: 10000, image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop", category: "Non-Kopi", stock: "Tersedia" },
-    { id: 8, name: "Lemon Tea", description: "Teh segar dengan perasan jeruk lemon asli yang menyegarkan.", price: 15000, image: "https://images.unsplash.com/photo-1627490450550-98319fdb1df3?q=80&w=500&auto=format&fit=crop", category: "Non-Kopi", stock: "Tersedia" },
-    { id: 9, name: "Matcha Latte", description: "Bubuk matcha premium Jepang dipadukan dengan susu segar.", price: 28000, image: "https://images.unsplash.com/photo-1536514498073-50e69d39c6cf?q=80&w=500&auto=format&fit=crop", category: "Non-Kopi", stock: "Tersedia" },
-    { id: 10, name: "Chocolate Ice", description: "Cokelat pekat pilihan yang disajikan dingin memanjakan lidah.", price: 25000, image: "https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?q=80&w=500&auto=format&fit=crop", category: "Non-Kopi", stock: "Tersedia" },
-    { id: 11, name: "Kentang Goreng", description: "Kentang goreng renyah dengan taburan bumbu gurih rahasia.", price: 18000, image: "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=500&auto=format&fit=crop", category: "Cemilan", stock: "Tersedia" },
-    { id: 12, name: "Pisang Goreng Keju", description: "Pisang kepok manis digoreng krispi dengan parutan keju melimpah.", price: 20000, image: "https://images.unsplash.com/photo-1605050965319-3543d463b218?q=80&w=500&auto=format&fit=crop", category: "Cemilan", stock: "Tersedia" },
-];
-
-const defaultPegawais: Pegawai[] = [
-    { id: "p1", name: "Pegawai 1", username: "pegawai", password: "pegawai", status: "Aktif" }
-];
 
 const defaultAboutUs: AboutUs = {
     title: "Cerita Sasa Kopi",
     content: "Sasa Kopi bermula dari kecintaan kami terhadap kopi Nusantara. Kami menggabungkan suasana kuno yang menenangkan dengan fasilitas modern untuk memberikan pengalaman ngopi terbaik bagi Anda. Setiap biji kopi dipilih dengan seksama untuk menyajikan secangkir kebahagiaan di setiap tegukan."
 };
-
-const defaultVouchers: Voucher[] = [
-    { id: "v1", code: "SASA50", type: "percent", value: 50, isActive: true },
-    { id: "v2", code: "KOPI100", type: "fixed", value: 10000, isActive: true },
-];
 
 const defaultWebSettings: WebSettings = {
     headerLogoText: "Sasa Kopi",
@@ -141,7 +117,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
     const [menus, setMenusState] = useState<Menu[]>([]);
-    const [pegawais, setPegawaisState] = useState<Pegawai[]>(defaultPegawais);
+    const [pegawais, setPegawaisState] = useState<Pegawai[]>([]);
     const [aboutUs, setAboutUsState] = useState<AboutUs>(defaultAboutUs);
     const [vouchers, setVouchersState] = useState<Voucher[]>([]);
     const [webSettings, setWebSettingsState] = useState<WebSettings>(defaultWebSettings);
@@ -150,68 +126,174 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        
-        const storedMenus = localStorage.getItem("data_menus");
-        setMenusState(storedMenus ? JSON.parse(storedMenus) : defaultMenus);
+        const fetchData = async () => {
+            try {
+                const [menusRes, pegawaisRes, vouchersRes, ordersRes, settingsRes, msgsRes] = await Promise.all([
+                    fetch('/api/menus').then(r => r.json()),
+                    fetch('/api/pegawais').then(r => r.json()),
+                    fetch('/api/vouchers').then(r => r.json()),
+                    fetch('/api/orders').then(r => r.json()),
+                    fetch('/api/settings').then(r => r.json()),
+                    fetch('/api/messages').then(r => r.json())
+                ]);
 
-        const storedPegawais = localStorage.getItem("data_pegawais");
-        setPegawaisState(storedPegawais ? JSON.parse(storedPegawais) : defaultPegawais);
+                if (Array.isArray(menusRes)) setMenusState(menusRes);
+                if (Array.isArray(pegawaisRes)) setPegawaisState(pegawaisRes);
+                if (Array.isArray(vouchersRes)) setVouchersState(vouchersRes);
+                if (Array.isArray(ordersRes)) setOrdersState(ordersRes);
+                if (settingsRes && Object.keys(settingsRes).length > 0) setWebSettingsState(settingsRes);
+                if (Array.isArray(msgsRes)) setContactMessagesState(msgsRes);
+            } catch (error) {
+                console.error("Failed to fetch initial data:", error);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
 
-        const storedAbout = localStorage.getItem("data_aboutUs");
-        setAboutUsState(storedAbout ? JSON.parse(storedAbout) : defaultAboutUs);
-
-        const storedVouchers = localStorage.getItem("data_vouchers");
-        setVouchersState(storedVouchers ? JSON.parse(storedVouchers) : defaultVouchers);
-
-        const storedWebSettings = localStorage.getItem("data_webSettings");
-        setWebSettingsState(storedWebSettings ? JSON.parse(storedWebSettings) : defaultWebSettings);
-
-        const storedOrders = localStorage.getItem("data_orders");
-        setOrdersState(storedOrders ? JSON.parse(storedOrders) : []);
-
-        const storedMessages = localStorage.getItem("data_contactMessages");
-        setContactMessagesState(storedMessages ? JSON.parse(storedMessages) : []);
-
-        setIsLoaded(true);
+        fetchData();
     }, []);
 
-    
-    const setMenus = (newMenus: Menu[]) => { setMenusState(newMenus); localStorage.setItem("data_menus", JSON.stringify(newMenus)); };
-    const setPegawais = (newPegawais: Pegawai[]) => { setPegawaisState(newPegawais); localStorage.setItem("data_pegawais", JSON.stringify(newPegawais)); };
-    const setAboutUs = (newAbout: AboutUs) => { setAboutUsState(newAbout); localStorage.setItem("data_aboutUs", JSON.stringify(newAbout)); };
-    const setVouchers = (newVouchers: Voucher[]) => { setVouchersState(newVouchers); localStorage.setItem("data_vouchers", JSON.stringify(newVouchers)); };
-    const setWebSettings = (newSettings: WebSettings) => { setWebSettingsState(newSettings); localStorage.setItem("data_webSettings", JSON.stringify(newSettings)); };
-    const setOrders = (newOrders: Order[]) => { setOrdersState(newOrders); localStorage.setItem("data_orders", JSON.stringify(newOrders)); };
-    const setContactMessages = (newMsgs: ContactMessage[]) => { setContactMessagesState(newMsgs); localStorage.setItem("data_contactMessages", JSON.stringify(newMsgs)); };
+    const addMenu = async (m: Menu) => {
+        const res = await fetch('/api/menus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(m)
+        });
+        if (res.ok) {
+            const newMenu = await res.json();
+            setMenusState([...menus, newMenu]);
+        }
+    };
+    const updateMenu = async (id: number, m: Partial<Menu>) => {
+        const res = await fetch(`/api/menus/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(m)
+        });
+        if (res.ok) {
+            const updatedMenu = await res.json();
+            setMenusState(menus.map(item => item.id === id ? updatedMenu : item));
+        }
+    };
+    const deleteMenu = async (id: number) => {
+        const res = await fetch(`/api/menus/${id}`, { method: 'DELETE' });
+        if (res.ok) setMenusState(menus.filter(item => item.id !== id));
+    };
 
-    
-    const addMenu = (m: Menu) => setMenus([...menus, m]);
-    const updateMenu = (id: number, m: Partial<Menu>) => setMenus(menus.map(item => item.id === id ? { ...item, ...m } : item));
-    const deleteMenu = (id: number) => setMenus(menus.filter(item => item.id !== id));
+    const addPegawai = async (p: Pegawai) => {
+        const res = await fetch('/api/pegawais', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(p)
+        });
+        if (res.ok) {
+            const newPegawai = await res.json();
+            setPegawaisState([...pegawais, newPegawai]);
+        }
+    };
+    const updatePegawai = async (id: string, p: Partial<Pegawai>) => {
+        const res = await fetch(`/api/pegawais/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(p)
+        });
+        if (res.ok) {
+            const updatedPegawai = await res.json();
+            setPegawaisState(pegawais.map(item => item.id === id ? updatedPegawai : item));
+        }
+    };
+    const deletePegawai = async (id: string) => {
+        const res = await fetch(`/api/pegawais/${id}`, { method: 'DELETE' });
+        if (res.ok) setPegawaisState(pegawais.filter(item => item.id !== id));
+    };
 
-    const addPegawai = (p: Pegawai) => setPegawais([...pegawais, p]);
-    const updatePegawai = (id: string, p: Partial<Pegawai>) => setPegawais(pegawais.map(item => item.id === id ? { ...item, ...p } : item));
-    const deletePegawai = (id: string) => setPegawais(pegawais.filter(item => item.id !== id));
+    const addVoucher = async (v: Voucher) => {
+        const res = await fetch('/api/vouchers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(v)
+        });
+        if (res.ok) {
+            const newV = await res.json();
+            setVouchersState([...vouchers, newV]);
+        }
+    };
+    const updateVoucher = async (id: string, v: Partial<Voucher>) => {
+        const res = await fetch(`/api/vouchers/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(v)
+        });
+        if (res.ok) {
+            const updatedV = await res.json();
+            setVouchersState(vouchers.map(item => item.id === id ? updatedV : item));
+        }
+    };
+    const deleteVoucher = async (id: string) => {
+        const res = await fetch(`/api/vouchers/${id}`, { method: 'DELETE' });
+        if (res.ok) setVouchersState(vouchers.filter(item => item.id !== id));
+    };
 
-    const addVoucher = (v: Voucher) => setVouchers([...vouchers, v]);
-    const updateVoucher = (id: string, v: Partial<Voucher>) => setVouchers(vouchers.map(item => item.id === id ? { ...item, ...v } : item));
-    const deleteVoucher = (id: string) => setVouchers(vouchers.filter(item => item.id !== id));
+    const addOrder = async (o: Order) => {
+        const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(o)
+        });
+        if (res.ok) {
+            const newOrder = await res.json();
+            setOrdersState([newOrder, ...orders]);
+        }
+    };
+    const updateOrderStatus = async (id: string, status: Order["status"]) => {
+        const res = await fetch(`/api/orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (res.ok) {
+            const updatedOrder = await res.json();
+            setOrdersState(orders.map(item => item.id === id ? updatedOrder : item));
+        }
+    };
 
-    const addOrder = (o: Order) => setOrders([o, ...orders]); 
-    const updateOrderStatus = (id: string, status: Order["status"]) => setOrders(orders.map(item => item.id === id ? { ...item, status } : item));
+    const setWebSettings = async (settings: WebSettings) => {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (res.ok) {
+            const updated = await res.json();
+            setWebSettingsState(updated);
+        }
+    };
 
-    const addContactMessage = (msg: ContactMessage) => setContactMessages([msg, ...contactMessages]);
-    const deleteContactMessage = (id: string) => setContactMessages(contactMessages.filter(item => item.id !== id));
+    const addContactMessage = async (msg: ContactMessage) => {
+        const res = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(msg)
+        });
+        if (res.ok) {
+            const newMsg = await res.json();
+            setContactMessagesState([newMsg, ...contactMessages]);
+        }
+    };
+    const deleteContactMessage = async (id: string) => {
+        const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+        if (res.ok) setContactMessagesState(contactMessages.filter(item => item.id !== id));
+    };
 
     return (
         <DataContext.Provider value={{
-            menus, setMenus, addMenu, updateMenu, deleteMenu,
-            pegawais, setPegawais, addPegawai, updatePegawai, deletePegawai,
-            aboutUs, setAboutUs,
-            vouchers, setVouchers, addVoucher, updateVoucher, deleteVoucher,
+            menus, setMenus: setMenusState, addMenu, updateMenu, deleteMenu,
+            pegawais, setPegawais: setPegawaisState, addPegawai, updatePegawai, deletePegawai,
+            aboutUs, setAboutUs: setAboutUsState,
+            vouchers, setVouchers: setVouchersState, addVoucher, updateVoucher, deleteVoucher,
             webSettings, setWebSettings,
-            orders, setOrders, addOrder, updateOrderStatus,
-            contactMessages, setContactMessages, addContactMessage, deleteContactMessage,
+            orders, setOrders: setOrdersState, addOrder, updateOrderStatus,
+            contactMessages, setContactMessages: setContactMessagesState, addContactMessage, deleteContactMessage,
             isLoaded
         }}>
             {children}

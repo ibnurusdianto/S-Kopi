@@ -7,9 +7,9 @@ export default function AdminMenuPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentMenu, setCurrentMenu] = useState<Partial<Menu>>({});
 
-    if (!isLoaded) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>;
-
     const [imageError, setImageError] = useState("");
+
+    if (!isLoaded) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>;
 
     const handleEdit = (menu: Menu) => {
         setCurrentMenu(menu);
@@ -18,7 +18,9 @@ export default function AdminMenuPage() {
     };
 
     const handleAddNew = () => {
-        setCurrentMenu({ name: "", description: "", price: 0, image: "", category: "Kopi", stock: "Tersedia" });
+        const uniqueCategories = Array.from(new Set(menus.map(m => m.category)));
+        const defaultCategory = uniqueCategories.length > 0 ? uniqueCategories[0] : "Kopi";
+        setCurrentMenu({ name: "", description: "", price: 0, image: "", category: defaultCategory, stock: "Tersedia" });
         setIsEditing(true);
         setImageError("");
     };
@@ -73,11 +75,20 @@ export default function AdminMenuPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Kategori</label>
-                        <select value={currentMenu.category || "Kopi"} onChange={e => setCurrentMenu({...currentMenu, category: e.target.value})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 dark:bg-neutral-900">
-                            <option value="Kopi">Kopi</option>
-                            <option value="Non-Kopi">Non-Kopi</option>
-                            <option value="Cemilan">Cemilan</option>
-                        </select>
+                        <input
+                            required
+                            type="text"
+                            list="category-options"
+                            value={currentMenu.category || ""}
+                            onChange={e => setCurrentMenu({...currentMenu, category: e.target.value})}
+                            placeholder="Pilih atau ketik kategori baru..."
+                            className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500"
+                        />
+                        <datalist id="category-options">
+                            {Array.from(new Set(menus.map(m => m.category))).map(cat => (
+                                <option key={cat} value={cat} />
+                            ))}
+                        </datalist>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Harga (Rp)</label>
