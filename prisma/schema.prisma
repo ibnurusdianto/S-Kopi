@@ -68,6 +68,8 @@ model orders {
   users_orders_cashier_idTousers users?                 @relation("orders_cashier_idTousers", fields: [cashier_id], references: [id], onUpdate: Restrict, map: "orders_ibfk_2")
   vouchers                       vouchers?              @relation(fields: [voucher_id], references: [id])
   payments                       payments?
+  payment_method_id              Int?
+  payment_methods                payment_methods?       @relation(fields: [payment_method_id], references: [id], onDelete: SetNull)
 
   @@index([cashier_id], map: "cashier_id")
   @@index([user_id], map: "user_id")
@@ -182,4 +184,16 @@ model customer_messages {
   message    String   @db.Text
   is_read    Boolean  @default(false)
   created_at DateTime @default(now())
+}
+
+model payment_methods {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(100)
+  provider        String    @db.VarChar(100)
+  account_details String?   @db.LongText
+  instructions    String?   @db.Text
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  orders          orders[]
 }

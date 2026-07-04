@@ -50,7 +50,17 @@ export interface Order {
     totalPrice: number;
     paymentMethod: string;
     status: "Baru" | "Diproses" | "Selesai" | "Dibatalkan";
+    paymentStatus?: "Belum Lunas" | "Lunas";
     createdAt: string;
+}
+
+export interface PaymentMethod {
+    id: number;
+    name: string;
+    provider: string;
+    account_details: string | null;
+    instructions: string | null;
+    is_active: boolean;
 }
 
 export interface ContactMessage {
@@ -88,13 +98,24 @@ interface DataContextType {
 
     orders: Order[];
     setOrders: (orders: Order[]) => void;
-    addOrder: (order: Order) => Promise<void>;
+    addOrder: (o: Order) => Promise<any>;
     updateOrderStatus: (id: string, status: Order["status"]) => Promise<void>;
+    updatePaymentStatus: (id: string, status: "Belum Lunas" | "Lunas") => Promise<void>;
+    deleteOrder: (id: string) => Promise<void>;
 
     contactMessages: ContactMessage[];
     setContactMessages: (msgs: ContactMessage[]) => void;
     addContactMessage: (msg: ContactMessage) => Promise<void>;
     deleteContactMessage: (id: string) => Promise<void>;
+    
+    categories: Category[];
+    setCategories: (categories: Category[]) => void;
+
+    paymentMethods: PaymentMethod[];
+    setPaymentMethods: (methods: PaymentMethod[]) => void;
+    addPaymentMethod: (method: Omit<PaymentMethod, "id">) => Promise<void>;
+    updatePaymentMethod: (id: number, method: Partial<PaymentMethod>) => Promise<void>;
+    deletePaymentMethod: (id: number) => Promise<void>;
     
     isLoaded: boolean;
 }
@@ -123,18 +144,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const [webSettings, setWebSettingsState] = useState<WebSettings>(defaultWebSettings);
     const [orders, setOrdersState] = useState<Order[]>([]);
     const [contactMessages, setContactMessagesState] = useState<ContactMessage[]>([]);
+    const [categories, setCategoriesState] = useState<Category[]>([]);
+    const [paymentMethods, setPaymentMethodsState] = useState<PaymentMethod[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [menusRes, pegawaisRes, vouchersRes, ordersRes, settingsRes, msgsRes] = await Promise.all([
+                const [menusRes, pegawaisRes, vouchersRes, ordersRes, settingsRes, msgsRes, categoriesRes, paymentMethodsRes] = await Promise.all([
                     fetch('/api/menus').then(r => r.json()),
                     fetch('/api/pegawais').then(r => r.json()),
                     fetch('/api/vouchers').then(r => r.json()),
                     fetch('/api/orders').then(r => r.json()),
                     fetch('/api/settings').then(r => r.json()),
-                    fetch('/api/messages').then(r => r.json())
+                    fetch('/api/messages').then(r => r.json()),
+                    fetch('/api/categories').then(r => r.json()),
+                    fetch('/api/payment-methods').then(r => r.json())
                 ]);
 
                 if (Array.isArray(menusRes)) setMenusState(menusRes);
@@ -143,6 +168,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 if (Array.isArray(ordersRes)) setOrdersState(ordersRes);
                 if (settingsRes && Object.keys(settingsRes).length > 0) setWebSettingsState(settingsRes);
                 if (Array.isArray(msgsRes)) setContactMessagesState(msgsRes);
+                if (Array.isArray(categoriesRes)) setCategoriesState(categoriesRes);
+                if (Array.isArray(paymentMethodsRes)) setPaymentMethodsState(paymentMethodsRes);
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
             } finally {
@@ -161,7 +188,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         });
         if (res.ok) {
             const newMenu = await res.json();
-            setMenusState([...menus, newMenu]);
+            setMenusState(prev => [...prev, newMenu]);
         }
     };
     const updateMenu = async (id: number, m: Partial<Menu>) => {
@@ -172,12 +199,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         });
         if (res.ok) {
             const updatedMenu = await res.json();
-            setMenusState(menus.map(item => item.id === id ? updatedMenu : item));
+            setMenusState(prev => prev.map(item => item.id === id ? updatedMenu : item));
         }
     };
     const deleteMenu = async (id: number) => {
         const res = await fetch(`/api/menus/${id}`, { method: 'DELETE' });
-        if (res.ok) setMenusState(menus.filter(item => item.id !== id));
+        if (res.ok) setMenusState(prev => prev.filter(item => item.id !== id));
     };
 
     const addPegawai = async (p: Pegawai) => {
@@ -243,7 +270,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const newOrder = await res.json();
             setOrdersState([newOrder, ...orders]);
+            return newOrder;
         }
+        return null;
     };
     const updateOrderStatus = async (id: string, status: Order["status"]) => {
         const res = await fetch(`/api/orders/${id}`, {
@@ -254,6 +283,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const updatedOrder = await res.json();
             setOrdersState(orders.map(item => item.id === id ? updatedOrder : item));
+        }
+    };
+    const updatePaymentStatus = async (id: string, paymentStatus: "Belum Lunas" | "Lunas") => {
+        const res = await fetch(`/api/orders/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentStatus })
+        });
+        if (res.ok) {
+            const updatedOrder = await res.json();
+            setOrdersState(orders.map(item => item.id === id ? updatedOrder : item));
+        }
+    };
+    const deleteOrder = async (id: string) => {
+        const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            setOrdersState(orders.filter(item => item.id !== id));
         }
     };
 
@@ -285,6 +331,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) setContactMessagesState(contactMessages.filter(item => item.id !== id));
     };
 
+    const addPaymentMethod = async (method: Omit<PaymentMethod, "id">) => {
+        const res = await fetch('/api/payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(method)
+        });
+        if (res.ok) {
+            const newMethod = await res.json();
+            setPaymentMethodsState([...paymentMethods, newMethod]);
+        }
+    };
+
+    const updatePaymentMethod = async (id: number, method: Partial<PaymentMethod>) => {
+        const res = await fetch(`/api/payment-methods/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(method)
+        });
+        if (res.ok) {
+            const updatedMethod = await res.json();
+            setPaymentMethodsState(paymentMethods.map(item => item.id === id ? updatedMethod : item));
+        }
+    };
+
+    const deletePaymentMethod = async (id: number) => {
+        const res = await fetch(`/api/payment-methods/${id}`, { method: 'DELETE' });
+        if (res.ok) setPaymentMethodsState(paymentMethods.filter(item => item.id !== id));
+    };
+
     return (
         <DataContext.Provider value={{
             menus, setMenus: setMenusState, addMenu, updateMenu, deleteMenu,
@@ -292,8 +367,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             aboutUs, setAboutUs: setAboutUsState,
             vouchers, setVouchers: setVouchersState, addVoucher, updateVoucher, deleteVoucher,
             webSettings, setWebSettings,
-            orders, setOrders: setOrdersState, addOrder, updateOrderStatus,
+            orders, setOrders: setOrdersState, addOrder, updateOrderStatus, updatePaymentStatus, deleteOrder,
             contactMessages, setContactMessages: setContactMessagesState, addContactMessage, deleteContactMessage,
+            categories, setCategories: setCategoriesState,
+            paymentMethods, setPaymentMethods: setPaymentMethodsState, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
             isLoaded
         }}>
             {children}

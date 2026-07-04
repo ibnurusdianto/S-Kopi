@@ -16,6 +16,7 @@ export async function GET() {
             id: u.id.toString(),
             name: u.full_name,
             username: u.username,
+            password: u.password_hash,
             status: "Aktif",
         }));
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
             id: user.id.toString(),
             name: user.full_name,
             username: user.username,
+            password: user.password_hash,
             status: "Aktif",
         };
 

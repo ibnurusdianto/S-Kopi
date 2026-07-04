@@ -21,7 +21,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (username === "admin" && password === "admin") {
+        const storedCreds = localStorage.getItem("adminCredentials");
+        const creds = storedCreds ? JSON.parse(storedCreds) : { username: "admin", password: "admin" };
+        
+        if (username === creds.username && password === creds.password) {
             localStorage.setItem("isAdminLoggedIn", "true");
             setIsLoggedIn(true);
             setError("");
@@ -42,6 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: "Kelola Tentang Kami", href: "/admin/tentang-kami" },
         { name: "Kelola Pengaturan Web", href: "/admin/pengaturan-web" },
         { name: "Kelola Redeem Voucher", href: "/admin/redeem" },
+        { name: "Kelola Pembayaran", href: "/admin/pembayaran" },
         { name: "Kelola Kontak & Pesan", href: "/admin/kontak" },
     ];
 

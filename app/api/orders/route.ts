@@ -26,6 +26,7 @@ export async function GET() {
             totalPrice: Number(o.total_amount),
             paymentMethod: "cash", 
             status: o.status === "pending" ? "Baru" : o.status === "processing" ? "Diproses" : o.status === "completed" ? "Selesai" : "Dibatalkan",
+            paymentStatus: o.payment_status === "paid" ? "Lunas" : "Belum Lunas",
             createdAt: o.created_at.toISOString()
         }));
 
@@ -57,6 +58,19 @@ export async function POST(request: Request) {
                 });
             }
         }
+
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const todayOrdersCount = await prisma.orders.count({
+            where: {
+                created_at: {
+                    gte: startOfDay
+                }
+            }
+        });
+        
+        const queueNumber = `A-${String(todayOrdersCount + 1).padStart(2, '0')}`;
 
         const newOrder = await prisma.orders.create({
             data: {
@@ -93,7 +107,9 @@ export async function POST(request: Request) {
             totalPrice: Number(newOrder.total_amount),
             paymentMethod: data.paymentMethod || "cash",
             status: "Baru",
-            createdAt: newOrder.created_at.toISOString()
+            paymentStatus: "Belum Lunas",
+            createdAt: newOrder.created_at.toISOString(),
+            queueNumber: queueNumber
         };
 
         return NextResponse.json(formattedOrder, { status: 201 });

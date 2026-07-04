@@ -1,13 +1,25 @@
 "use client";
 import { useData } from "../context/DataContext";
+import { useState } from "react";
 
 export default function PegawaiOrdersPage() {
-    const { orders, updateOrderStatus, isLoaded } = useData();
+    const { orders, updateOrderStatus, updatePaymentStatus, isLoaded } = useData();
+
+    const [orderPage, setOrderPage] = useState(1);
+    const [orderLimit, setOrderLimit] = useState(10);
+
+    const totalOrders = orders.length;
+    const totalPages = Math.ceil(totalOrders / orderLimit);
+    const displayedOrders = orders.slice((orderPage - 1) * orderLimit, orderPage * orderLimit);
 
     if (!isLoaded) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>;
 
     const handleStatusChange = (id: string, newStatus: string) => {
         updateOrderStatus(id, newStatus as any);
+    };
+
+    const handlePaymentStatusChange = (id: string, newStatus: string) => {
+        updatePaymentStatus(id, newStatus as "Belum Lunas" | "Lunas");
     };
 
     return (
@@ -18,6 +30,21 @@ export default function PegawaiOrdersPage() {
             </div>
 
             <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden">
+                <div className="p-4 bg-gray-50 dark:bg-neutral-950/30 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Daftar Pesanan</h2>
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Tampilkan:</span>
+                        <select 
+                            value={orderLimit} 
+                            onChange={(e) => { setOrderLimit(Number(e.target.value)); setOrderPage(1); }}
+                            className="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                            <option value={10}>10</option>
+                            <option value={100}>100</option>
+                            <option value={1000}>1000</option>
+                        </select>
+                    </div>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 dark:bg-neutral-900 text-gray-600 dark:text-gray-400 font-semibold border-b border-gray-200 dark:border-neutral-800 whitespace-nowrap">
@@ -31,7 +58,7 @@ export default function PegawaiOrdersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                            {orders.map(order => (
+                            {displayedOrders.map(order => (
                                 <tr key={order.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/50 align-top transition-colors">
                                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white whitespace-nowrap">#{order.id.slice(-6)}</td>
                                     <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap" suppressHydrationWarning>
@@ -53,22 +80,40 @@ export default function PegawaiOrdersPage() {
                                     <td className="px-6 py-4 font-bold text-amber-700 dark:text-amber-500 whitespace-nowrap">
                                         Rp {order.totalPrice.toLocaleString("id-ID")}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap space-y-2">
-                                        <select 
-                                            value={order.status} 
-                                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                            className={`w-full text-xs font-bold border rounded-lg px-3 py-2 cursor-pointer
-                                                ${order.status === "Baru" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/50" : ""}
-                                                ${order.status === "Diproses" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/50" : ""}
-                                                ${order.status === "Selesai" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50" : ""}
-                                                ${order.status === "Dibatalkan" ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/50" : ""}
-                                            `}
-                                        >
-                                            <option value="Baru">Baru</option>
-                                            <option value="Diproses">Diproses</option>
-                                            <option value="Selesai">Selesai</option>
-                                            <option value="Dibatalkan">Dibatalkan</option>
-                                        </select>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status Pesanan</span>
+                                                <select 
+                                                    value={order.status} 
+                                                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                                    className={`w-full text-xs font-bold border rounded-lg px-3 py-2 cursor-pointer transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500
+                                                        ${order.status === "Baru" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/50" : ""}
+                                                        ${order.status === "Diproses" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/50" : ""}
+                                                        ${order.status === "Selesai" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50" : ""}
+                                                        ${order.status === "Dibatalkan" ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/50" : ""}
+                                                    `}
+                                                >
+                                                    <option value="Baru">Baru</option>
+                                                    <option value="Diproses">Diproses</option>
+                                                    <option value="Selesai">Selesai</option>
+                                                    <option value="Dibatalkan">Dibatalkan</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Pembayaran</span>
+                                                <select
+                                                    value={order.paymentStatus || "Belum Lunas"}
+                                                    onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                                                    className={`w-full text-xs font-bold border rounded-lg px-3 py-2 cursor-pointer transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500
+                                                        ${order.paymentStatus === "Lunas" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/50"}
+                                                    `}
+                                                >
+                                                    <option value="Belum Lunas">Belum Lunas</option>
+                                                    <option value="Lunas">Lunas</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -80,6 +125,25 @@ export default function PegawaiOrdersPage() {
                         </tbody>
                     </table>
                 </div>
+                {totalPages > 1 && (
+                    <div className="p-4 border-t border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900/50 flex justify-between items-center text-sm">
+                        <button 
+                            onClick={() => setOrderPage(p => Math.max(1, p - 1))}
+                            disabled={orderPage === 1}
+                            className="px-4 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg disabled:opacity-50 text-gray-700 dark:text-gray-300 font-medium transition-colors hover:bg-gray-100 dark:hover:bg-neutral-700 shadow-sm"
+                        >
+                            Sebelumnya
+                        </button>
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Halaman {orderPage} dari {totalPages}</span>
+                        <button 
+                            onClick={() => setOrderPage(p => Math.min(totalPages, p + 1))}
+                            disabled={orderPage === totalPages}
+                            className="px-4 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg disabled:opacity-50 text-gray-700 dark:text-gray-300 font-medium transition-colors hover:bg-gray-100 dark:hover:bg-neutral-700 shadow-sm"
+                        >
+                            Selanjutnya
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

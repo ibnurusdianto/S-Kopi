@@ -15,7 +15,7 @@ const formatRupiah = (number: number) => {
 };
 
 export default function KeranjangPage() {
-    const { addOrder } = useData();
+    const { addOrder, paymentMethods, isLoaded } = useData();
     const { cart, setCart, voucher, applyVoucher, removeVoucher, discountAmount } = useCart();
     const [voucherInput, setVoucherInput] = useState("");
     const [voucherMessage, setVoucherMessage] = useState("");
@@ -41,13 +41,15 @@ export default function KeranjangPage() {
         setCart(cart.map(c => c.cartItemId === cartItemId ? { ...c, qty: c.qty + 1, totalPrice: c.unitPrice * (c.qty + 1) } : c));
     };
 
-    const handleSubmitOrder = (e: React.FormEvent) => {
+    const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
         setCheckoutStatus("loading");
 
         const orderItems = cart.map(item => ({
+            product_id: item.product.id,
             name: `${item.product.name} ${item.size !== "Regular" ? "("+item.size+")" : ""}`,
-            qty: item.qty
+            qty: item.qty,
+            subtotal: item.totalPrice
         }));
         
         const newOrder = {
@@ -60,14 +62,16 @@ export default function KeranjangPage() {
             status: "Baru" as const,
             createdAt: new Date().toISOString()
         };
-        addOrder(newOrder);
+        const created = await addOrder(newOrder);
 
         setTimeout(() => {
-            setQueueNumber(`A-${Math.floor(Math.random() * 900) + 100}`);
+            if (created && created.queueNumber) {
+                setQueueNumber(created.queueNumber);
+            }
             setCheckoutStatus("success");
             setCart([]); 
             removeVoucher(); 
-        }, 2000);
+        }, 500);
     };
 
     const handleApplyVoucher = () => {
@@ -129,37 +133,60 @@ export default function KeranjangPage() {
                         
                         <div className="mt-4 w-full max-w-xs text-left bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5">
                             <p className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-3">Selesaikan Pembayaran Anda:</p>
-                            {checkoutForm.payment === "qris" && (
-                                <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-white rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="w-32 h-32 bg-gray-100 flex items-center justify-center mb-3 border-2 border-dashed border-gray-300 rounded-lg">
-                                        <span className="text-xs text-gray-400 text-center font-bold">QR Barcode<br/>(Scan Disini)</span>
+                            {(() => {
+                                const activeMethods = paymentMethods?.filter(p => p.name === checkoutForm.payment) || [];
+                                if (activeMethods.length === 0) return null;
+
+                                return (
+                                    <div className="space-y-3">
+                                        {activeMethods.map((method, idx) => (
+                                            <div key={idx} className="bg-white dark:bg-neutral-900 border border-amber-200 dark:border-amber-800/50 rounded-xl p-3">
+                                                {method.name === "qris" ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <p className="text-xs text-gray-500 font-semibold mb-2">Scan QR Code di bawah ini</p>
+                                                        {method.account_details && method.account_details.startsWith("data:image") ? (
+                                                            <img src={method.account_details} alt="QRIS" className="w-full max-w-[200px] object-contain rounded-lg border border-gray-200 dark:border-neutral-700" />
+                                                        ) : (
+                                                            <p className="text-sm font-bold text-gray-900 dark:text-white">QRIS tidak tersedia</p>
+                                                        )}
+                                                    </div>
+                                                ) : method.name === "ewallet" ? (
+                                                    <div>
+                                                        <p className="text-[10px] text-gray-500 font-semibold mb-0.5">{method.provider}</p>
+                                                        <div className="flex justify-between items-center mt-1">
+                                                            <input type="text" readOnly value={method.account_details || ""} className="w-full bg-transparent text-sm font-black text-gray-900 dark:text-white border-none focus:outline-none" />
+                                                            <button 
+                                                                onClick={() => navigator.clipboard.writeText(method.account_details || "")}
+                                                                className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 ml-2"
+                                                            >
+                                                                Salin
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-500 font-semibold mb-0.5">{method.provider}</p>
+                                                            <p className="text-sm font-black text-gray-900 dark:text-white">{method.account_details}</p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => navigator.clipboard.writeText(method.account_details || "")}
+                                                            className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold"
+                                                        >
+                                                            Salin
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {method.instructions && (
+                                                    <p className="text-xs text-amber-700 dark:text-amber-500 mt-2 font-medium">
+                                                        * {method.instructions}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
-                                    <p className="text-xs font-bold text-gray-800">A.N. Sasa Coffee</p>
-                                </div>
-                            )}
-                            {checkoutForm.payment === "bank" && (
-                                <div className="space-y-3">
-                                    <div className="bg-white dark:bg-neutral-800 p-4 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
-                                        <p className="text-xs text-gray-500 mb-1">Bank BCA</p>
-                                        <p className="font-black text-lg text-foreground tracking-widest mb-1">1234 5678 90</p>
-                                        <p className="text-xs font-semibold text-gray-500">A.N. Sasa Coffee</p>
-                                    </div>
-                                </div>
-                            )}
-                            {checkoutForm.payment === "ewallet" && (
-                                <div className="space-y-3">
-                                    <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-white rounded-xl border border-gray-200 shadow-sm">
-                                        <div className="w-24 h-24 bg-gray-100 flex items-center justify-center mb-3 border-2 border-dashed border-gray-300 rounded-lg">
-                                            <span className="text-[10px] text-gray-400 text-center font-bold">QR E-Wallet</span>
-                                        </div>
-                                        <p className="text-xs text-gray-500 text-center font-semibold mb-2">- ATAU -</p>
-                                        <div className="w-full bg-gray-50 p-2 rounded-lg text-center">
-                                            <p className="text-[10px] text-gray-500 mb-0.5">Transfer No. Telp (GoPay/OVO/DANA)</p>
-                                            <p className="font-bold text-sm text-gray-800 tracking-wider">0812 3456 7890</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </div>
                         <div className="w-full max-w-xs mt-6 space-y-3">
                             <button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
@@ -175,9 +202,9 @@ export default function KeranjangPage() {
                                 </svg>
                                 Kirim Bukti ke WhatsApp
                             </button>
-                            <Link href="/menu" className="w-full block text-center bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300 font-bold py-3.5 rounded-xl text-sm transition-all shadow-sm">
-                                Kembali ke Menu
-                            </Link>
+                            <button disabled className="w-full block text-center bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 font-bold py-3.5 rounded-xl text-sm shadow-sm cursor-not-allowed">
+                                Kembali ke Menu (Selesaikan Pembayaran)
+                            </button>
                         </div>
                     </div>
                 ) : cart.length === 0 ? (
@@ -289,11 +316,19 @@ export default function KeranjangPage() {
                                         <input required type="tel" value={checkoutForm.phone} onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})} placeholder="081234567890" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Metode Pembayaran</label>
-                                        <select value={checkoutForm.payment} onChange={(e) => setCheckoutForm({...checkoutForm, payment: e.target.value})} className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 cursor-pointer">
-                                            <option value="qris">QRIS (Rekomendasi)</option>
-                                            <option value="bank">Transfer Bank</option>
-                                            <option value="ewallet">E-Wallet (GoPay, OVO, dll)</option>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5 capitalize">Metode Pembayaran</label>
+                                        <select value={checkoutForm.payment} onChange={(e) => setCheckoutForm({...checkoutForm, payment: e.target.value})} className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 cursor-pointer capitalize">
+                                            {(() => {
+                                                const activeMethods = paymentMethods?.filter(p => p.is_active) || [];
+                                                const uniqueMethods = Array.from(new Set(activeMethods.map(m => m.name)))
+                                                    .map(name => activeMethods.find(m => m.name === name)!);
+                                                
+                                                return uniqueMethods.map(method => (
+                                                    <option key={method.id} value={method.name}>
+                                                        {method.name === "bank" ? "Transfer Bank" : method.name === "ewallet" ? "E-Wallet" : method.name}
+                                                    </option>
+                                                ));
+                                            })()}
                                         </select>
                                     </div>
                                     <div>

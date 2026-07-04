@@ -36,9 +36,20 @@ function MenuItemCard({ item, cartQty, onAddClick, onDecreaseClick, onViewImage 
 
             <div className="p-4 sm:p-5 flex flex-col flex-grow bg-white dark:bg-neutral-900">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
-                        {item.category}
-                    </span>
+                    <div className="flex gap-2 items-center flex-wrap">
+                        <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
+                            {item.category}
+                        </span>
+                        {item.stock === "Habis" ? (
+                            <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-red-50 text-red-800 dark:bg-red-900/40 dark:text-red-400">
+                                Habis
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-green-50 text-green-800 dark:bg-green-900/40 dark:text-green-400">
+                                Tersedia
+                            </span>
+                        )}
+                    </div>
                     <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
                         <span>★</span>
                         <span className="text-foreground text-xs">{item.rating}</span>
@@ -55,7 +66,11 @@ function MenuItemCard({ item, cartQty, onAddClick, onDecreaseClick, onViewImage 
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-neutral-800 flex flex-col gap-2">
-                    {cartQty === 0 ? (
+                    {item.stock === "Habis" ? (
+                        <button disabled className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-not-allowed focus:outline-none">
+                            Stok Habis
+                        </button>
+                    ) : cartQty === 0 ? (
                         <button onClick={() => onAddClick(item)} className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors focus:outline-none">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -77,10 +92,11 @@ function MenuItemCard({ item, cartQty, onAddClick, onDecreaseClick, onViewImage 
 
 
 export default function MenuPage() {
-    const { menus, addOrder, isLoaded } = useData();
+    const { menus, orders, addOrder, paymentMethods, isLoaded } = useData();
 
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [sortFilter, setSortFilter] = useState("default");
+    const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
@@ -162,15 +178,13 @@ export default function MenuPage() {
     
     const handleOpenCheckout = () => {
         setIsCheckoutOpen(true);
-        
-        setQueueNumber(`A-${Math.floor(Math.random() * 900) + 100}`);
+        setQueueNumber("..."); 
     };
 
-    const handleSubmitOrder = (e: React.FormEvent) => {
+    const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
         setCheckoutStatus("loading");
 
-        
         const orderItems = cart.map(item => ({
             product_id: item.product.id,
             name: `${item.product.name} ${item.size !== "Regular" ? "("+item.size+")" : ""}`,
@@ -188,12 +202,14 @@ export default function MenuPage() {
             status: "Baru" as const,
             createdAt: new Date().toISOString()
         };
-        addOrder(newOrder);
+        const created = await addOrder(newOrder);
 
-        
         setTimeout(() => {
+            if (created && created.queueNumber) {
+                setQueueNumber(created.queueNumber);
+            }
             setCheckoutStatus("success");
-        }, 2000);
+        }, 500);
     };
 
     const handleCloseCheckout = () => {
@@ -207,12 +223,17 @@ export default function MenuPage() {
     };
 
     
+    const availableCategories = useMemo(() => {
+        const cats = new Set(menus.map(m => m.category));
+        return Array.from(cats);
+    }, [menus]);
+
     const mappedMenuData = useMemo(() => {
         return menus.map(m => ({
             id: m.id,
             name: m.name,
-            category: m.category.toLowerCase().includes("kopi") && !m.category.toLowerCase().includes("non") ? "coffee" : "non-coffee",
-            type: m.category === "Cemilan" ? "food" : "drink",
+            category: m.category,
+            type: m.category.toLowerCase().includes("cemilan") || m.category.toLowerCase().includes("makanan") ? "food" : "drink",
             desc: m.description,
             price: m.price,
             rating: 4.8, 
@@ -225,12 +246,17 @@ export default function MenuPage() {
         let result = [...mappedMenuData];
         if (categoryFilter !== "all") result = result.filter(item => item.category === categoryFilter);
 
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(item => item.name.toLowerCase().includes(query));
+        }
+
         if (sortFilter === "price-asc") result.sort((a, b) => a.price - b.price);
         else if (sortFilter === "price-desc") result.sort((a, b) => b.price - a.price);
         else if (sortFilter === "rating-desc") result.sort((a, b) => b.rating - a.rating);
 
         return result;
-    }, [categoryFilter, sortFilter]);
+    }, [categoryFilter, sortFilter, searchQuery, mappedMenuData]);
 
     const totalPages = Math.ceil(processedMenu.length / itemsPerPage);
     const paginatedMenu = useMemo(() => {
@@ -271,11 +297,25 @@ export default function MenuPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-gray-200/50 dark:border-neutral-800/50 pb-4 backdrop-blur-sm">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
                         <button onClick={() => { setCategoryFilter("all"); setCurrentPage(1); }} className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors shrink-0 ${categoryFilter === "all" ? "bg-amber-600 text-white shadow-sm" : "bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-600"}`}>Semua Menu</button>
-                        <button onClick={() => { setCategoryFilter("coffee"); setCurrentPage(1); }} className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors shrink-0 ${categoryFilter === "coffee" ? "bg-amber-600 text-white shadow-sm" : "bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-600"}`}>Kopi</button>
-                        <button onClick={() => { setCategoryFilter("non-coffee"); setCurrentPage(1); }} className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors shrink-0 ${categoryFilter === "non-coffee" ? "bg-amber-600 text-white shadow-sm" : "bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-600"}`}>Non-Kopi</button>
+                        {availableCategories.map((cat) => (
+                            <button 
+                                key={cat}
+                                onClick={() => { setCategoryFilter(cat); setCurrentPage(1); }} 
+                                className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors shrink-0 ${categoryFilter === cat ? "bg-amber-600 text-white shadow-sm" : "bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-600"}`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
 
                     <div className="flex items-center gap-2 w-full md:w-auto">
+                        <input 
+                            type="text" 
+                            placeholder="Cari nama menu..."
+                            value={searchQuery}
+                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                            className="w-full md:w-48 bg-white dark:bg-neutral-800 text-xs sm:text-sm font-medium rounded-xl px-3 py-2.5 border border-gray-200 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
                         <select value={sortFilter} onChange={(e) => { setSortFilter(e.target.value); setCurrentPage(1); }} className="w-full md:w-48 bg-white dark:bg-neutral-800 text-xs sm:text-sm font-medium rounded-xl px-3 py-2.5 border border-gray-200 dark:border-neutral-700 focus:outline-none cursor-pointer">
                             <option value="default">Urutan: Rekomendasi</option>
                             <option value="price-asc">Harga: Termurah ↑</option>
@@ -449,37 +489,60 @@ export default function MenuPage() {
                                     
                                     <div className="mt-4 w-full max-w-xs text-left bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5">
                                         <p className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-3">Selesaikan Pembayaran Anda:</p>
-                                        {checkoutForm.payment === "qris" && (
-                                            <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-white rounded-xl border border-gray-200 shadow-sm">
-                                                <div className="w-32 h-32 bg-gray-100 flex items-center justify-center mb-3 border-2 border-dashed border-gray-300 rounded-lg">
-                                                    <span className="text-xs text-gray-400 text-center font-bold">QR Barcode<br/>(Scan Disini)</span>
+                                        {(() => {
+                                            const activeMethods = paymentMethods?.filter(p => p.name === checkoutForm.payment) || [];
+                                            if (activeMethods.length === 0) return null;
+
+                                            return (
+                                                <div className="space-y-3">
+                                                    {activeMethods.map((method, idx) => (
+                                                        <div key={idx} className="bg-white dark:bg-neutral-900 border border-amber-200 dark:border-amber-800/50 rounded-xl p-3">
+                                                            {method.name === "qris" ? (
+                                                                <div className="flex flex-col items-center">
+                                                                    <p className="text-xs text-gray-500 font-semibold mb-2">Scan QR Code di bawah ini</p>
+                                                                    {method.account_details && method.account_details.startsWith("data:image") ? (
+                                                                        <img src={method.account_details} alt="QRIS" className="w-full max-w-[200px] object-contain rounded-lg border border-gray-200 dark:border-neutral-700" />
+                                                                    ) : (
+                                                                        <p className="text-sm font-bold text-gray-900 dark:text-white">QRIS tidak tersedia</p>
+                                                                    )}
+                                                                </div>
+                                                            ) : method.name === "ewallet" ? (
+                                                                <div>
+                                                                    <p className="text-[10px] text-gray-500 font-semibold mb-0.5">{method.provider}</p>
+                                                                    <div className="flex justify-between items-center mt-1">
+                                                                        <input type="text" readOnly value={method.account_details || ""} className="w-full bg-transparent text-sm font-black text-gray-900 dark:text-white border-none focus:outline-none" />
+                                                                        <button 
+                                                                            onClick={() => navigator.clipboard.writeText(method.account_details || "")}
+                                                                            className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 ml-2"
+                                                                        >
+                                                                            Salin
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex justify-between items-center">
+                                                                    <div>
+                                                                        <p className="text-[10px] text-gray-500 font-semibold mb-0.5">{method.provider}</p>
+                                                                        <p className="text-sm font-black text-gray-900 dark:text-white">{method.account_details}</p>
+                                                                    </div>
+                                                                    <button 
+                                                                        onClick={() => navigator.clipboard.writeText(method.account_details || "")}
+                                                                        className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold"
+                                                                    >
+                                                                        Salin
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                            {method.instructions && (
+                                                                <p className="text-xs text-amber-700 dark:text-amber-500 mt-2 font-medium">
+                                                                    * {method.instructions}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <p className="text-xs font-bold text-gray-800">A.N. Sasa Coffee</p>
-                                            </div>
-                                        )}
-                                        {checkoutForm.payment === "bank" && (
-                                            <div className="space-y-3">
-                                                <div className="bg-white dark:bg-neutral-800 p-4 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
-                                                    <p className="text-xs text-gray-500 mb-1">Bank BCA</p>
-                                                    <p className="font-black text-lg text-foreground tracking-widest mb-1">1234 5678 90</p>
-                                                    <p className="text-xs font-semibold text-gray-500">A.N. Sasa Coffee</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {checkoutForm.payment === "ewallet" && (
-                                            <div className="space-y-3">
-                                                <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-white rounded-xl border border-gray-200 shadow-sm">
-                                                    <div className="w-24 h-24 bg-gray-100 flex items-center justify-center mb-3 border-2 border-dashed border-gray-300 rounded-lg">
-                                                        <span className="text-[10px] text-gray-400 text-center font-bold">QR E-Wallet</span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-500 text-center font-semibold mb-2">- ATAU -</p>
-                                                    <div className="w-full bg-gray-50 p-2 rounded-lg text-center">
-                                                        <p className="text-[10px] text-gray-500 mb-0.5">Transfer No. Telp (GoPay/OVO/DANA)</p>
-                                                        <p className="font-bold text-sm text-gray-800 tracking-wider">0812 3456 7890</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
                                     </div>
 
                                     <div className="w-full max-w-xs mt-6 space-y-3">
@@ -496,8 +559,8 @@ export default function MenuPage() {
                                             </svg>
                                             Kirim Bukti ke WhatsApp
                                         </button>
-                                        <button onClick={handleCloseCheckout} className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300 font-bold py-3.5 rounded-xl text-sm transition-all shadow-sm">
-                                            Selesai & Tutup
+                                        <button disabled className="w-full bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 font-bold py-3.5 rounded-xl text-sm shadow-sm cursor-not-allowed">
+                                            Kembali ke Menu (Selesaikan Pembayaran)
                                         </button>
                                     </div>
                                 </div>
@@ -543,9 +606,8 @@ export default function MenuPage() {
                                     <form id="checkout-form" onSubmit={handleSubmitOrder} className="p-4 sm:p-6 space-y-6">
                                     
                                     <div className="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl p-4 sm:p-5 shadow-sm">
-                                        <h3 className="text-sm font-bold text-foreground mb-4 border-b border-gray-100 dark:border-neutral-700 pb-3 flex justify-between">
-                                            <span>Ringkasan Pesanan</span>
-                                            <span className="text-amber-600">Nomor Antrian: {queueNumber}</span>
+                                        <h3 className="text-sm font-bold text-foreground mb-4 border-b border-gray-100 dark:border-neutral-700 pb-3">
+                                            Ringkasan Pesanan
                                         </h3>
                                         <div className="space-y-4 max-h-[150px] overflow-y-auto pr-2 scrollbar-thin">
                                             {cart.map((c) => (
@@ -579,24 +641,26 @@ export default function MenuPage() {
 
                                     
                                     <div className="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
-                                        <h3 className="text-sm font-bold text-foreground mb-1">Pilih Pembayaran</h3>
+                                        <h3 className="text-sm font-bold text-foreground mb-1 capitalize">Pilih Pembayaran</h3>
                                         <div className="grid grid-cols-1 gap-2.5">
-                                            {[
-                                                { id: "qris", title: "QRIS", desc: "Rekomendasi - Pindai kode QR" },
-                                                { id: "bank", title: "Transfer Semua Bank", desc: "BCA, BNI, BRI, Mandiri, dll." },
-                                                { id: "ewallet", title: "E-Wallet", desc: "DANA, OVO, GoPay, ShopeePay" },
-                                            ].map((method) => (
-                                                <label key={method.id} className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${checkoutForm.payment === method.id ? "border-amber-500 bg-amber-50/50 dark:bg-amber-900/20" : "border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700/50"}`}>
-                                                    <input type="radio" name="payment" value={method.id} checked={checkoutForm.payment === method.id} onChange={(e) => setCheckoutForm({...checkoutForm, payment: e.target.value})} className="hidden" />
-                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-3 shrink-0 ${checkoutForm.payment === method.id ? "border-amber-600" : "border-gray-300"}`}>
-                                                        {checkoutForm.payment === method.id && <div className="w-2 h-2 rounded-full bg-amber-600" />}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-foreground leading-none mb-1">{method.title}</p>
-                                                        <p className="text-xs text-gray-500">{method.desc}</p>
-                                                    </div>
-                                                </label>
-                                            ))}
+                                            {(() => {
+                                                const activeMethods = paymentMethods?.filter(p => p.is_active) || [];
+                                                const uniqueMethods = Array.from(new Set(activeMethods.map(m => m.name)))
+                                                    .map(name => activeMethods.find(m => m.name === name)!);
+
+                                                return uniqueMethods.map((method) => (
+                                                    <label key={method.id} className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${checkoutForm.payment === method.name ? "border-amber-500 bg-amber-50/50 dark:bg-amber-900/20" : "border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700/50"}`}>
+                                                        <input type="radio" name="payment" value={method.name} checked={checkoutForm.payment === method.name} onChange={(e) => setCheckoutForm({...checkoutForm, payment: e.target.value})} className="hidden" />
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-3 shrink-0 ${checkoutForm.payment === method.name ? "border-amber-600" : "border-gray-300"}`}>
+                                                            {checkoutForm.payment === method.name && <div className="w-2 h-2 rounded-full bg-amber-600" />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-foreground leading-none mb-1 capitalize">{method.name}</p>
+                                                            <p className="text-xs text-gray-500">{method.name === "bank" ? "Transfer ke Rekening Bank" : method.name === "ewallet" ? "Pembayaran E-Wallet" : method.provider}</p>
+                                                        </div>
+                                                    </label>
+                                                ));
+                                            })()}
                                         </div>
                                     </div>
 

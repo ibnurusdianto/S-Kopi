@@ -3,11 +3,15 @@ import { useState } from "react";
 import { useData, Menu } from "../../context/DataContext";
 
 export default function AdminMenuPage() {
-    const { menus, addMenu, updateMenu, deleteMenu, isLoaded } = useData();
+    const { menus, addMenu, updateMenu, deleteMenu, isLoaded, categories } = useData();
     const [isEditing, setIsEditing] = useState(false);
     const [currentMenu, setCurrentMenu] = useState<Partial<Menu>>({});
 
     const [imageError, setImageError] = useState("");
+    const [newCategory, setNewCategory] = useState("");
+    const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+    const allCategories = Array.from(new Set([...(categories || []), ...menus.map(m => m.category), ...customCategories]));
 
     if (!isLoaded) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Memuat data...</div>;
 
@@ -18,8 +22,7 @@ export default function AdminMenuPage() {
     };
 
     const handleAddNew = () => {
-        const uniqueCategories = Array.from(new Set(menus.map(m => m.category)));
-        const defaultCategory = uniqueCategories.length > 0 ? uniqueCategories[0] : "Kopi";
+        const defaultCategory = categories && categories.length > 0 ? categories[0] : "Kopi";
         setCurrentMenu({ name: "", description: "", price: 0, image: "", category: defaultCategory, stock: "Tersedia" });
         setIsEditing(true);
         setImageError("");
@@ -75,24 +78,54 @@ export default function AdminMenuPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Kategori</label>
-                        <input
+                        <select
                             required
-                            type="text"
-                            list="category-options"
                             value={currentMenu.category || ""}
                             onChange={e => setCurrentMenu({...currentMenu, category: e.target.value})}
-                            placeholder="Pilih atau ketik kategori baru..."
-                            className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500"
-                        />
-                        <datalist id="category-options">
-                            {Array.from(new Set(menus.map(m => m.category))).map(cat => (
-                                <option key={cat} value={cat} />
+                            className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 dark:bg-neutral-900"
+                        >
+                            {allCategories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
                             ))}
-                        </datalist>
+                        </select>
+                        <div className="mt-2 flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="Kategori baru..."
+                                value={newCategory}
+                                onChange={e => setNewCategory(e.target.value)}
+                                className="flex-1 bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const cat = newCategory.trim();
+                                    if (cat) {
+                                        if (!allCategories.includes(cat)) {
+                                            setCustomCategories([...customCategories, cat]);
+                                        }
+                                        setCurrentMenu({...currentMenu, category: cat});
+                                        setNewCategory("");
+                                    }
+                                }}
+                                className="bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/30 dark:text-amber-500 dark:hover:bg-amber-900/50 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                            >
+                                Tambah
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Harga (Rp)</label>
-                        <input required type="number" value={currentMenu.price || 0} onChange={e => setCurrentMenu({...currentMenu, price: Number(e.target.value)})} className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500" />
+                        <input 
+                            required 
+                            type="text" 
+                            value={currentMenu.price ? currentMenu.price.toLocaleString("id-ID") : ""} 
+                            onChange={e => {
+                                const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                                setCurrentMenu({...currentMenu, price: rawValue ? Number(rawValue) : 0})
+                            }} 
+                            className="w-full bg-transparent border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500" 
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Deskripsi</label>
