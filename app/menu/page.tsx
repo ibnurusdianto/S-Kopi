@@ -113,6 +113,7 @@ export default function MenuPage() {
     const [checkoutForm, setCheckoutForm] = useState({ name: "", phone: "", notes: "", payment: "qris" });
     const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "loading" | "success">("idle");
     const [queueNumber, setQueueNumber] = useState("");
+    const [lastOrder, setLastOrder] = useState<any>(null);
 
     
     const handleApplyVoucher = () => {
@@ -207,6 +208,9 @@ export default function MenuPage() {
         setTimeout(() => {
             if (created && created.queueNumber) {
                 setQueueNumber(created.queueNumber);
+                setLastOrder({...newOrder, queueNumber: created.queueNumber});
+            } else {
+                setLastOrder(newOrder);
             }
             setCheckoutStatus("success");
         }, 500);
@@ -274,7 +278,8 @@ export default function MenuPage() {
     }
 
     return (
-        <div className={`relative min-h-screen bg-background text-foreground ${totalCartItems > 0 ? 'pb-36 sm:pb-32' : 'pb-24'}`}>
+        <div className={`relative min-h-screen bg-background text-foreground ${totalCartItems > 0 ? 'pb-36 sm:pb-32' : 'pb-24'} print:bg-white print:pb-0`}>
+            <div className="print:hidden">
 
             
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -467,7 +472,7 @@ export default function MenuPage() {
                                         <h3 className="text-2xl font-black text-foreground mb-1">Pesanan Berhasil!</h3>
                                         <p className="text-gray-500 text-sm">Harap tunjukkan layar ini atau sebutkan nomor antrian ke kasir.</p>
                                     </div>
-                                    <div className="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl p-6 w-full max-w-xs shadow-sm">
+                                    <div className="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl p-6 w-full max-w-sm shadow-sm">
                                         <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Nomor Antrian Anda</p>
                                         <p className="text-5xl font-black text-amber-600 tracking-tighter mb-4">{queueNumber}</p>
                                         <div className="text-left border-t border-dashed border-gray-300 dark:border-neutral-600 pt-4 mt-4">
@@ -487,7 +492,7 @@ export default function MenuPage() {
                                     </div>
                                     
                                     
-                                    <div className="mt-4 w-full max-w-xs text-left bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5">
+                                    <div className="mt-4 w-full max-w-sm text-left bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5">
                                         <p className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-3">Selesaikan Pembayaran Anda:</p>
                                         {(() => {
                                             const activeMethods = paymentMethods?.filter(p => p.name === checkoutForm.payment) || [];
@@ -501,7 +506,7 @@ export default function MenuPage() {
                                                                 <div className="flex flex-col items-center">
                                                                     <p className="text-xs text-gray-500 font-semibold mb-2">Scan QR Code di bawah ini</p>
                                                                     {method.account_details && method.account_details.startsWith("data:image") ? (
-                                                                        <img src={method.account_details} alt="QRIS" className="w-full max-w-[200px] object-contain rounded-lg border border-gray-200 dark:border-neutral-700" />
+                                                                        <img src={method.account_details} alt="QRIS" className="w-full object-contain rounded-lg border border-gray-200 dark:border-neutral-700" />
                                                                     ) : (
                                                                         <p className="text-sm font-bold text-gray-900 dark:text-white">QRIS tidak tersedia</p>
                                                                     )}
@@ -545,19 +550,12 @@ export default function MenuPage() {
                                         })()}
                                     </div>
 
-                                    <div className="w-full max-w-xs mt-6 space-y-3">
-                                        <button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                                    <div className="w-full max-w-sm mt-6 space-y-3 print:hidden">
+                                        <button onClick={() => window.print()} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v3.375c0 .621.504 1.125 1.125 1.125h8.25c.621 0 1.125-.504 1.125-1.125v-3.375z" />
                                             </svg>
                                             Cetak Nomor Antrian
-                                        </button>
-                                        <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-4.03 9-9s-4.03-9-9-9-9 4.03-9 9 4.03 9 9 9z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 13.5l1.5 1.5 3-3" />
-                                            </svg>
-                                            Kirim Bukti ke WhatsApp
                                         </button>
                                         <button disabled className="w-full bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 font-bold py-3.5 rounded-xl text-sm shadow-sm cursor-not-allowed">
                                             Kembali ke Menu (Selesaikan Pembayaran)
@@ -730,7 +728,65 @@ export default function MenuPage() {
                     </div>
                 </div>
             )}
+            </div>
 
+            {/* Printable Receipt (Only visible on print) */}
+            {lastOrder && (
+                <div className="hidden print:block w-full text-black p-4 text-sm font-sans">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-black mb-1">KOPI SASA</h2>
+                        <p className="text-gray-500 text-xs">Struk Pesanan & Nomor Antrian</p>
+                    </div>
+                    
+                    <div className="border-t border-b border-dashed border-gray-400 py-4 mb-6 text-center">
+                        <p className="text-xs uppercase font-bold text-gray-500 mb-1">NOMOR ANTRIAN ANDA</p>
+                        <p className="text-5xl font-black text-black">{lastOrder.queueNumber || queueNumber}</p>
+                    </div>
+
+                    <div className="space-y-2 mb-6">
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Waktu:</span> 
+                            <span className="font-semibold">{new Date(lastOrder.createdAt).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Nama Pemesan:</span> 
+                            <span className="font-semibold">{lastOrder.customerName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Metode Pembayaran:</span> 
+                            <span className="font-semibold uppercase">{lastOrder.paymentMethod}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Status Pembayaran:</span> 
+                            <span className="font-semibold">Belum Lunas (Menunggu Pengecekan)</span>
+                        </div>
+                    </div>
+
+                    <div className="border-b border-dashed border-gray-400 pb-4 mb-4">
+                        <p className="font-bold mb-3 uppercase text-xs text-gray-500">Daftar Menu:</p>
+                        <div className="space-y-3">
+                            {lastOrder.items.map((item: any, idx: number) => (
+                                <div key={idx} className="flex justify-between items-start">
+                                    <div className="pr-4">
+                                        <p className="font-semibold">{item.qty}x {item.name}</p>
+                                    </div>
+                                    <p className="font-semibold whitespace-nowrap">{formatRupiah(item.subtotal)}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between font-black text-lg mb-8">
+                        <span>TOTAL PEMBAYARAN:</span>
+                        <span>{formatRupiah(lastOrder.totalPrice)}</span>
+                    </div>
+
+                    <div className="text-center text-xs text-gray-500 font-semibold space-y-1">
+                        <p>Terima kasih atas pesanan Anda!</p>
+                        <p>Silakan tunjukkan struk & nomor antrian ini ke kasir.</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

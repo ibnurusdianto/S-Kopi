@@ -167,7 +167,13 @@ export default function AdminPembayaranPage() {
                                 <tr key={method.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/50 transition-colors">
                                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white uppercase">{method.name}</td>
                                     <td className="px-6 py-4 font-semibold text-gray-700 dark:text-gray-300">{method.provider}</td>
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{method.account_details || "-"}</td>
+                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                        {method.name === "qris" && method.account_details?.startsWith("data:image") ? (
+                                            <img src={method.account_details} alt="QRIS" className="h-12 object-contain rounded border border-gray-200 dark:border-neutral-700" />
+                                        ) : (
+                                            method.account_details || "-"
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${method.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
                                             {method.is_active ? "Aktif" : "Nonaktif"}
